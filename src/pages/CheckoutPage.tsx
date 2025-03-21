@@ -46,8 +46,13 @@ export function CheckoutPage() {
   const [errors, setErrors] = useState<CheckoutErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Set once the order succeeds. Clearing the cart re-renders this page before
+  // the navigation to the confirmation lands (React Router runs navigations in
+  // a transition), so without this the empty-cart guard below would win the
+  // race and bounce the shopper to /cart instead.
+  const [placed, setPlaced] = useState(false);
 
-  if (lines.length === 0) return <Navigate to="/cart" replace />;
+  if (lines.length === 0 && !placed) return <Navigate to="/cart" replace />;
 
   function focusFirstError(found: CheckoutErrors) {
     const first = FIELD_ORDER.find((name) => found[name]);
@@ -72,6 +77,7 @@ export function CheckoutPage() {
         lines.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
         form,
       );
+      setPlaced(true);
       clear();
       navigate(`/orders/${order.id}`, { state: { order } });
     } catch (err) {
