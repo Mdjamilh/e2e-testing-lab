@@ -79,3 +79,31 @@ test.describe("network failures", { tag: "@regression" }, () => {
     await expect(checkoutPage.field("postalCode")).toBeFocused();
   });
 });
+
+test.describe("response rewriting", { tag: "@regression" }, () => {
+  test("renders whatever the API returns: patch a real response with route.fetch", async ({ productsPage, page }) => {
+    await page.route("**/api/products*", async (route) => {
+      const response = await route.fetch();
+      const body = (await response.json()) as { products: { name: string; priceCents: number }[] };
+      const products = body.products.slice(0, 1).map((p) => ({ ...p, priceCents: 123456 }));
+      await route.fulfill({ response, json: { products, total: products.length } });
+    });
+
+    await productsPage.goto();
+    await expect(productsPage.cards).toHaveCount(1);
+    await expect(productsPage.cards.first()).toContainText("$1,234.56");
+  });
+
+  test("the order request carries the bearer token and the cart lines", async ({ cartWith, cartPage, checkoutPage, page }) => {
+    await cartWith([PRICED.gauze.name, PRICED.gauze.name]);
+    await cartPage.checkoutLink.click();
+    await checkoutPage.fill(VALID_CUSTOMER);
+
+    const requestPromise = page.waitForRequest((req) => req.url().endsWith("/api/orders") && req.method() === "POST");
+    await checkoutPage.submit();
+    const request = await requestPromise;
+
+    expect(request.headers()["authorization"]).toMatch(/^Bearer demo\./);
+    expect(request.postDataJSON()).toMatchObject({ lines: [{ productId: "wnd-gauze", quantity: 2 }] });
+  });
+});
