@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 export class LoginPage {
+  readonly card: Locator;
   readonly heading: Locator;
   readonly email: Locator;
   readonly password: Locator;
@@ -9,6 +10,7 @@ export class LoginPage {
   readonly demoCredentials: Locator;
 
   constructor(readonly page: Page) {
+    this.card = page.getByRole("region", { name: "Sign in to Clinic Supplies" });
     this.heading = page.getByRole("heading", { name: "Sign in to Clinic Supplies" });
     this.email = page.getByLabel("Email");
     this.password = page.getByLabel("Password");
