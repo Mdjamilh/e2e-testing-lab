@@ -9,6 +9,7 @@ import { DEMO_USER, VALID_CUSTOMER } from "../support/constants";
  * The deployed site is static (the API lives in a service worker), so there is
  * no HTTP API to call when BASE_URL points at it.
  */
+// eslint-disable-next-line playwright/no-skipped-test -- deliberate: nothing to test on a static host
 test.skip(!!process.env.BASE_URL, "The static deployment has no HTTP API; MSW serves it in the browser.");
 
 async function token(request: APIRequestContext): Promise<string> {
