@@ -48,6 +48,11 @@ export class ProductsPage {
     await this.category.selectOption({ label: categoryLabel });
   }
 
+  async applyFilters({ search, category }: { search?: string; category?: string }) {
+    if (category) await this.filterBy(category);
+    if (search) await this.searchFor(search);
+  }
+
   /** Web-first: waits until the visible product names equal `names`, in order. */
   async expectProducts(names: string[]) {
     await expect(this.cards.getByRole("heading")).toHaveText(names);

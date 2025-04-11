@@ -12,18 +12,12 @@ test.describe("catalog", () => {
     for (const row of CATALOG_CASES) {
       test(`${row.title}`, async ({ productsPage }) => {
         await productsPage.goto();
-        if (row.category) await productsPage.filterBy(row.category);
-        if (row.search) await productsPage.searchFor(row.search);
+        await productsPage.applyFilters(row);
 
-        if (row.expected.length === 0) {
-          await expect(productsPage.emptyMessage).toBeVisible();
-          await expect(productsPage.cards).toHaveCount(0);
-        } else {
-          await productsPage.expectProducts(row.expected);
-          await expect(productsPage.resultCount).toHaveText(
-            row.expected.length === 1 ? "1 product" : `${row.expected.length} products`,
-          );
-        }
+        // Wait for the count first: it only renders once the request has settled.
+        await expect(productsPage.resultCount).toHaveText(countLabel(row.expected.length));
+        await productsPage.expectProducts(row.expected);
+        await expect(productsPage.emptyMessage).toBeVisible({ visible: row.expected.length === 0 });
       });
     }
   });
@@ -47,3 +41,7 @@ test.describe("catalog", () => {
     await expect(card.getByRole("button", { name: /out of stock/ })).toBeDisabled();
   });
 });
+
+function countLabel(n: number): string {
+  return n === 1 ? "1 product" : `${n} products`;
+}
